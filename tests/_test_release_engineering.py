@@ -57,8 +57,24 @@ class DockerTests(unittest.TestCase):
         self.assertIn("/health", text)
 
     def test_webgateway_package_is_copied_into_the_image(self):
-        text = read("Dockerfile")
-        self.assertIn("COPY wb_webgateway/ ./wb_webgateway/", text)
+        for name in ("Dockerfile", "Dockerfile.windows"):
+            text = read(name)
+            self.assertIn("COPY wb_webgateway/ ./wb_webgateway/", text)
+
+    def test_images_bundle_a_loadable_curl_cffi(self):
+        for name in ("Dockerfile", "Dockerfile.windows"):
+            text = read(name)
+            self.assertIn("curl_cffi==0.17.0", text)
+            self.assertIn("--only-binary=:all:", text)
+            self.assertIn("from curl_cffi import Curl", text)
+
+    def test_publish_workflow_covers_all_three_platforms(self):
+        text = read(".github", "workflows", "docker-publish.yml")
+        self.assertIn("platforms: linux/amd64,linux/arm64", text)
+        self.assertIn("runs-on: windows-2022", text)
+        self.assertIn("'--platform', 'windows/amd64'", text)
+        self.assertIn("Merge Linux and Windows platforms", text)
+        self.assertIn('{"linux/amd64", "linux/arm64", "windows/amd64"}', text)
 
     def test_compose_supports_puid_pgid(self):
         text = read("docker-compose.yml")

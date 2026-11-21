@@ -1,0 +1,46 @@
+# escape=`
+
+# Stage 1: Build the Windows Go/uTLS ClientHello bridge.
+FROM golang:1.24-windowsservercore-ltsc2022 AS tls-bridge
+SHELL ["powershell", "-NoLogo", "-Command"]
+WORKDIR C:/src
+COPY tools/wb-tls-bridge/go.mod tools/wb-tls-bridge/go.sum* tools/wb-tls-bridge/main.go ./
+RUN $env:CGO_ENABLED = '0'; `
+    $env:GOOS = 'windows'; `
+    $env:GOARCH = 'amd64'; `
+    go build -trimpath -ldflags='-s -w' -o C:/wb-tls-bridge.exe .
+
+# WorkBuddy Multi-Account Reverse Proxy Gateway (Windows Server 2022, amd64).
+FROM python:3.11-windowsservercore-ltsc2022
+SHELL ["cmd", "/S", "/C"]
+
+ENV PYTHONUNBUFFERED=1 `
+    HOST=0.0.0.0 `
+    PORT=8788 `
+    API_KEY= `
+    TZ=Asia/Shanghai
+
+WORKDIR C:/app
+
+COPY wb_*.py dashboard.html ./
+COPY wb_webgateway/ ./wb_webgateway/
+COPY --from=tls-bridge C:/wb-tls-bridge.exe C:/app/bin/wb-tls-bridge.exe
+COPY tools/wb-tls-bridge/README.md C:/app/licenses/wb-tls-bridge/README.md
+COPY tools/wb-tls-bridge/licenses/ C:/app/licenses/wb-tls-bridge/
+
+# Both dependencies have native Windows amd64 wheels. Importing Curl verifies
+# that the bundled curl-impersonate DLL can actually be loaded by the runtime.
+RUN python -m pip install --no-cache-dir PyYAML==6.0.3 && `
+    python -m pip install --no-cache-dir --only-binary=:all: curl_cffi==0.17.0 && `
+    python -c "import curl_cffi; from curl_cffi import Curl; c = Curl(); print('curl_cffi', curl_cffi.__version__); c.close()"
+
+RUN mkdir C:\app\accounts C:\app\usage C:\app\subbridge-data
+
+VOLUME ["C:\\app\\accounts", "C:\\app\\usage", "C:\\app\\subbridge-data"]
+
+EXPOSE 8788
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 `
+  CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/health' % os.environ.get('PORT','8788'), timeout=3)" || exit 1
+
+CMD ["python", "-m", "wb_proxy", "--host", "0.0.0.0", "--lan"]

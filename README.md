@@ -115,6 +115,20 @@ Docker 镜像在构建阶段已经编译好当前架构的 Go/uTLS 桥，容器�
 未设置 `WB_TLS_FINGERPRINT` 时默认 `auto`；如需彻底关闭桥，可加
 `- WB_TLS_FINGERPRINT=python`，卷中的账号、设置和用量不会因此改变。
 
+本 fork（`wiuee/workbuddy2api-hub`）的镜像还内置 `curl_cffi 0.17.0`，主标签同时包含
+`linux/amd64`、`linux/arm64` 和 `windows/amd64`，并保留独立的 Windows 标签：
+
+```bash
+# Linux / Windows 共用（按宿主平台选择）
+docker pull ghcr.io/wiuee/workbuddy2api-hub:latest
+
+# 仅 Windows amd64（Windows Server Core LTSC 2022）
+docker pull ghcr.io/wiuee/workbuddy2api-hub:latest-windows-amd64
+```
+
+Windows 镜像可在 Windows Server 2022 上使用进程隔离运行；其它 Windows 主机请使用
+Hyper-V 隔离，并确保宿主机已启用 Containers / Hyper-V 功能。
+
 ### 3. 启动入口：优先用 `-m`
 
 同一份代码、同一个账号池，`python3 wb_proxy.py` 与 `python3 -m wb_proxy` 的常驻内存差 **47-54 MB**
@@ -269,6 +283,7 @@ python tests/run_all.py realm      # 只跑名字里含 realm 的
 
 ### Unreleased
 
+- Docker 发布工作流新增内置 `curl_cffi` 的 Linux amd64/arm64 与 Windows amd64 镜像，主标签合并三种平台，并提供独立 `-windows-amd64` 标签。
 - 设置页新增独立「备份」栏目，支持配置 Cloudflare R2（Account ID、Bucket、API Token 密钥、对象前缀与可选 Endpoint）、测试连接、手动上传及查看云端备份；备份归档包含 `accounts/` 与可选的 `usage/`，Secret Access Key 不会通过设置接口回显。
 
 完整更新记录请查阅 **[docs/CHANGELOG.md](docs/CHANGELOG.md)**。

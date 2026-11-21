@@ -25,8 +25,13 @@ COPY tools/wb-tls-bridge/licenses/ /app/licenses/wb-tls-bridge/
 
 # The subscription bridge writes config.yaml for a mihomo instance that must
 # run on the host (or in another container). Persist its data and mount the
-# rendered config into that instance; see docs/SUBBRIDGE.md.
-RUN pip install --no-cache-dir PyYAML==6.0.3
+# rendered config into that instance; see docs/SUBBRIDGE.md. curl_cffi is
+# bundled for callers that need browser-compatible TLS fingerprints. Requiring
+# a binary wheel makes an unsupported architecture fail during the image build
+# instead of leaving a source-build toolchain in the runtime image.
+RUN pip install --no-cache-dir PyYAML==6.0.3 && \
+    pip install --no-cache-dir --only-binary=:all: curl_cffi==0.17.0 && \
+    python -c "import curl_cffi; from curl_cffi import Curl; c = Curl(); print('curl_cffi', curl_cffi.__version__); c.close()"
 
 # Create data directories
 RUN mkdir -p /app/accounts /app/usage /app/subbridge-data

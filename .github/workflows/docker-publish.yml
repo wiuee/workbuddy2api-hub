@@ -1,64 +1,306 @@
 name: Publish Docker image
 
 on:
+  push:
+    branches: [main]
   release:
-    types: [ published ]
+    types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  publish:
+  prepare:
+    name: Prepare image names and tags
     runs-on: ubuntu-latest
+    outputs:
+      source_ref: ${{ steps.prepare.outputs.source_ref }}
+      version: ${{ steps.prepare.outputs.version }}
+      linux_tags: ${{ steps.prepare.outputs.linux_tags }}
+      windows_tags: ${{ steps.prepare.outputs.windows_tags }}
+      verify_tag: ${{ steps.prepare.outputs.verify_tag }}
     steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.release.tag_name }}
-    - uses: docker/setup-qemu-action@v3
-    - uses: docker/setup-buildx-action@v3
-    - name: Log in to GHCR
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Log in to Docker Hub
-      env:
-        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      if: env.DOCKERHUB_USER != '' && env.DOCKERHUB_TOKEN != ''
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Determine Docker images
-      id: images
-      env:
-        DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      run: |
-        TARGETS="ghcr.io/${{ github.repository }}"
-        if [ -n "$DOCKERHUB_USER" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
-          TARGETS="$TARGETS
-        ${{ github.repository }}"
-        fi
-        echo "list<<EOF" >> $GITHUB_OUTPUT
-        echo "$TARGETS" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-    - name: Extract Docker metadata
-      uses: docker/metadata-action@v5
-      id: meta
-      with:
-        images: ${{ steps.images.outputs.list }}
-        tags: |
-          type=raw,value=${{ github.event.release.tag_name }}
-          type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        push: true
-        platforms: linux/amd64,linux/arm64
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+      - name: Determine release metadata
+        id: prepare
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          REPOSITORY="${GITHUB_REPOSITORY,,}"
+          GHCR_IMAGE="ghcr.io/${REPOSITORY}"
+          SOURCE_REF="$GITHUB_SHA"
+
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            VERSION="$RELEASE_TAG"
+            SOURCE_REF="$RELEASE_TAG"
+            LATEST="$([[ "$PRERELEASE" == "true" ]] && echo false || echo true)"
+          else
+            VERSION="sha-${GITHUB_SHA::7}"
+            LATEST=true
+          fi
+
+          IMAGES=("$GHCR_IMAGE")
+          if [[ -n "$DOCKERHUB_USER" && -n "$DOCKERHUB_TOKEN" ]]; then
+            IMAGES+=("${DOCKERHUB_USER}/${REPOSITORY#*/}")
+          fi
+
+          LINUX_TAGS=()
+          WINDOWS_TAGS=()
+          for IMAGE in "${IMAGES[@]}"; do
+            LINUX_TAGS+=("${IMAGE}:${VERSION}")
+            WINDOWS_TAGS+=("${IMAGE}:${VERSION}-windows-amd64")
+            if [[ "$LATEST" == "true" ]]; then
+              LINUX_TAGS+=("${IMAGE}:latest")
+              WINDOWS_TAGS+=("${IMAGE}:latest-windows-amd64")
+            fi
+          done
+
+          {
+            echo "source_ref=$SOURCE_REF"
+            echo "version=$VERSION"
+            echo "verify_tag=${GHCR_IMAGE}:${VERSION}"
+            echo "linux_tags<<EOF"
+            printf '%s\n' "${LINUX_TAGS[@]}"
+            echo "EOF"
+            echo "windows_tags<<EOF"
+            printf '%s\n' "${WINDOWS_TAGS[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          printf 'Linux tags:\n%s\nWindows tags:\n%s\n' \
+            "$(printf '%s\n' "${LINUX_TAGS[@]}")" \
+            "$(printf '%s\n' "${WINDOWS_TAGS[@]}")"
+
+  linux:
+    name: Linux amd64 and arm64
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.source_ref }}
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: env.DOCKERHUB_USER != '' && env.DOCKERHUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push Linux images
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ needs.prepare.outputs.linux_tags }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ needs.prepare.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  windows:
+    name: Windows amd64 (Server Core LTSC 2022)
+    needs: prepare
+    runs-on: windows-2022
+    timeout-minutes: 90
+    outputs:
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.source_ref }}
+      - name: Check Windows Docker engine
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((Get-Service docker).Status -ne 'Running') { Start-Service docker }
+          docker version
+          if ($LASTEXITCODE -ne 0) { throw 'Docker engine is not ready' }
+          docker info --format '{{.OSType}}/{{.Architecture}}'
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: env.DOCKERHUB_USER != '' && env.DOCKERHUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build Windows image
+        id: build
+        shell: pwsh
+        env:
+          WINDOWS_TAGS: ${{ needs.prepare.outputs.windows_tags }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+          REVISION: ${{ github.sha }}
+          IMAGE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tags = @($env:WINDOWS_TAGS -split "\r?\n" | Where-Object { $_ })
+          if (-not $tags) { throw 'No Windows image tags were generated' }
+          "windows_tags=$($tags -join ',')" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $arguments = @(
+            'build', '--file', 'Dockerfile.windows',
+            '--platform', 'windows/amd64', '--isolation', 'process',
+            '--tag', $tags[0],
+            '--label', "org.opencontainers.image.source=$env:SOURCE_URL",
+            '--label', "org.opencontainers.image.revision=$env:REVISION",
+            '--label', "org.opencontainers.image.version=$env:IMAGE_VERSION",
+            '.'
+          )
+          & docker @arguments
+          if ($LASTEXITCODE -ne 0) { throw "docker build failed: $LASTEXITCODE" }
+          foreach ($tag in ($tags | Select-Object -Skip 1)) {
+            & docker tag $tags[0] $tag
+            if ($LASTEXITCODE -ne 0) { throw "docker tag failed: $tag" }
+          }
+      - name: Verify bundled curl_cffi
+        shell: pwsh
+        env:
+          WINDOWS_TAGS: ${{ needs.prepare.outputs.windows_tags }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $image = ($env:WINDOWS_TAGS -split "\r?\n")[0]
+          & docker run --rm --isolation=process --entrypoint python $image -c "import platform, curl_cffi; from curl_cffi import Curl; c = Curl(); print(f'curl_cffi={curl_cffi.__version__} os={platform.system()} arch={platform.machine()}'); c.close()"
+          if ($LASTEXITCODE -ne 0) { throw 'curl_cffi container smoke test failed' }
+      - name: Smoke test gateway and dashboard
+        shell: pwsh
+        env:
+          WINDOWS_TAGS: ${{ needs.prepare.outputs.windows_tags }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $image = ($env:WINDOWS_TAGS -split "\r?\n")[0]
+          $container = "wb-proxy-smoke-$env:GITHUB_RUN_ID"
+          try {
+            & docker run --detach --name $container --isolation=process --publish 8799:8788 --env API_KEY=docker-smoke-key $image
+            if ($LASTEXITCODE -ne 0) { throw 'Gateway container failed to start' }
+            $healthy = $false
+            for ($attempt = 0; $attempt -lt 40; $attempt++) {
+              try {
+                $health = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8799/health' -TimeoutSec 3
+                if ($health.StatusCode -eq 200) { $healthy = $true; break }
+              } catch {
+                Start-Sleep -Seconds 3
+              }
+            }
+            if (-not $healthy) { throw 'Gateway health endpoint did not become ready' }
+            $dashboard = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8799/' -TimeoutSec 10
+            if ($dashboard.StatusCode -ne 200 -or $dashboard.Content -notmatch '<html') {
+              throw 'Dashboard did not load successfully'
+            }
+            Write-Host 'Windows gateway health and dashboard smoke tests passed'
+          } finally {
+            & docker logs $container 2>&1 | Out-Host
+            & docker rm --force $container 2>&1 | Out-Host
+            $global:LASTEXITCODE = 0
+          }
+      - name: Push Windows images
+        id: push
+        shell: pwsh
+        env:
+          WINDOWS_TAGS: ${{ needs.prepare.outputs.windows_tags }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tags = @($env:WINDOWS_TAGS -split "\r?\n" | Where-Object { $_ })
+          $digest = $null
+          foreach ($tag in $tags) {
+            $output = (& docker push $tag 2>&1 | Out-String)
+            Write-Host $output
+            if ($LASTEXITCODE -ne 0) { throw "docker push failed: $tag" }
+            $match = [regex]::Matches($output, 'digest:\s*(sha256:[0-9a-f]{64})') | Select-Object -Last 1
+            if ($match) { $digest = $match.Groups[1].Value }
+          }
+          if (-not $digest) { throw 'Could not determine the Windows image digest' }
+          "digest=$digest" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+  manifest:
+    name: Merge Linux and Windows platforms
+    needs: [prepare, linux, windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        if: env.DOCKERHUB_USER != '' && env.DOCKERHUB_TOKEN != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Create multi-OS image indexes
+        shell: bash
+        env:
+          LINUX_TAGS: ${{ needs.prepare.outputs.linux_tags }}
+          LINUX_DIGEST: ${{ needs.linux.outputs.digest }}
+          WINDOWS_DIGEST: ${{ needs.windows.outputs.digest }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r TAG; do
+            [[ -n "$TAG" ]] || continue
+            IMAGE="${TAG%:*}"
+            docker buildx imagetools create --tag "$TAG" \
+              "${IMAGE}@${LINUX_DIGEST}" \
+              "${IMAGE}@${WINDOWS_DIGEST}"
+          done <<< "$LINUX_TAGS"
+      - name: Verify all three platforms
+        shell: bash
+        env:
+          VERIFY_TAG: ${{ needs.prepare.outputs.verify_tag }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "$VERIFY_TAG"
+          docker buildx imagetools inspect --raw "$VERIFY_TAG" | python3 -c '
+          import json, sys
+          index = json.load(sys.stdin)
+          platforms = {
+              "%s/%s" % (item["platform"].get("os"), item["platform"].get("architecture"))
+              for item in index.get("manifests", [])
+          }
+          expected = {"linux/amd64", "linux/arm64", "windows/amd64"}
+          missing = expected - platforms
+          if missing:
+              raise SystemExit("Missing platforms: " + ", ".join(sorted(missing)))
+          print("Verified platforms: " + ", ".join(sorted(platforms)))
+          '
