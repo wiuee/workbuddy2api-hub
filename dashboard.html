@@ -3486,6 +3486,40 @@ if(!window.__NEXT_UI__ && defaultConsoleLayout) {
     '这就是当前版本': 'This is the running version',
     '当前设置为不保留备份，回退不可用': 'Backups are disabled in the settings, so rollback is unavailable',
     '更新成功后才会留下可回退的备份': 'A backup becomes available after the first successful update',
+    '备份': 'Backup',
+    'Cloudflare R2 备份': 'Cloudflare R2 backup',
+    '把 accounts/ 中的账号与设置、以及可选的 usage/ 用量数据打包为 ZIP，通过 S3 兼容接口上传到你自己的 R2 存储桶。默认只手动执行，不会自动上传。': 'Package accounts and settings from accounts/, plus optional usage data from usage/, into a ZIP and upload it to your own R2 bucket through the S3-compatible API. Backups only run when requested; nothing is uploaded automatically.',
+    '32 位 Account ID': '32-character Account ID',
+    '存储桶名称': 'Bucket name',
+    '对象前缀': 'Object prefix',
+    'S3 Endpoint（可选）': 'S3 Endpoint (optional)',
+    '留空则根据 Account ID 自动生成': 'Leave blank to derive it from the Account ID',
+    '当前上传地址：': 'Current upload endpoint:',
+    '备份 usage/ 用量与日志数据': 'Back up usage and log data in usage/',
+    'Secret Access Key 仅保存在本网关设置中，读取设置时只返回是否已配置。备份归档含账号凭证，请使用专用私有桶和仅具备所需权限的 R2 API Token。': 'Secret Access Key is stored only in this gateway\'s settings; settings reads report only whether it is configured. Archives contain account credentials, so use a dedicated private bucket and an R2 API token limited to the required permissions.',
+    '保存备份设置': 'Save backup settings',
+    '测试 R2 连接': 'Test R2 connection',
+    '立即备份到 R2': 'Back up to R2 now',
+    '刷新云端备份': 'Refresh cloud backups',
+    '对象 Key': 'Object key',
+    '大小': 'Size',
+    '保存配置后可查看云端备份': 'Save the configuration to view cloud backups',
+    '已保存，留空保持不变': 'Saved; leave blank to keep it unchanged',
+    '仅首次或更换时填写': 'Fill in only initially or when replacing it',
+    '(已配置)': '(configured)',
+    '正在保存备份设置…': 'Saving backup settings…',
+    '备份设置已保存': 'Backup settings saved',
+    '保存备份设置失败: ': 'Could not save backup settings: ',
+    '正在测试 R2 连接…': 'Testing the R2 connection…',
+    'R2 连接正常': 'R2 connection succeeded',
+    'R2 连接测试失败: ': 'R2 connection test failed: ',
+    'R2 中还没有备份': 'No backups in R2 yet',
+    '云端备份列表已刷新': 'Cloud backup list refreshed',
+    '读取云端备份失败: ': 'Could not read cloud backups: ',
+    '正在打包并上传备份，大型用量目录可能需要一些时间…': 'Creating and uploading the archive; a large usage directory may take a while…',
+    '备份已上传到 R2': 'Backup uploaded to R2',
+    'R2 备份失败: ': 'R2 backup failed: ',
+    'Cloudflare R2 配置、连接测试、手动备份和云端备份列表。': 'Cloudflare R2 configuration, connection testing, manual backups and the cloud backup list.',
     '正在回退到历史版本': 'Rolling back',
     '回退完成': 'Rollback completed',
     '回退会重启网关并中断当前请求，账号与用量数据不受影响。继续吗？': 'Rolling back restarts the gateway and interrupts in-flight requests; accounts and usage data are not affected. Continue?',
@@ -4832,7 +4866,41 @@ if(!window.__NEXT_UI__ && defaultConsoleLayout) {
     "全部分组": "全部分組",
     "选择错误码会自动勾选全部命中账号；选中分组后，刷新、测试、补积分和启停仍只作用于该分组": "選擇錯誤碼會自動勾選全部命中帳號；選中分組後，刷新、測試、補積分和啟停仍只作用於該分組",
     "已启用：桌面 chat 兼容头": "已啟用：桌面 chat 相容標頭",
-    "已关闭桌面 chat 兼容头": "已關閉桌面 chat 相容標頭"
+    "已关闭桌面 chat 兼容头": "已關閉桌面 chat 相容標頭",
+    "备份": "備份",
+    "Cloudflare R2 备份": "Cloudflare R2 備份",
+    "把 accounts/ 中的账号与设置、以及可选的 usage/ 用量数据打包为 ZIP，通过 S3 兼容接口上传到你自己的 R2 存储桶。默认只手动执行，不会自动上传。": "把 accounts/ 中的帳號與設定、以及可選的 usage/ 用量資料打包為 ZIP，透過 S3 相容介面上傳到你自己的 R2 儲存桶。預設只手動執行，不會自動上傳。",
+    "32 位 Account ID": "32 位 Account ID",
+    "存储桶名称": "儲存桶名稱",
+    "对象前缀": "物件前綴",
+    "S3 Endpoint（可选）": "S3 Endpoint（可選）",
+    "留空则根据 Account ID 自动生成": "留空則根據 Account ID 自動產生",
+    "当前上传地址：": "目前上傳地址：",
+    "备份 usage/ 用量与日志数据": "備份 usage/ 用量與日誌資料",
+    "Secret Access Key 仅保存在本网关设置中，读取设置时只返回是否已配置。备份归档含账号凭证，请使用专用私有桶和仅具备所需权限的 R2 API Token。": "Secret Access Key 僅保存在本閘道設定中，讀取設定時只回傳是否已設定。備份封存含帳號憑證，請使用專用私有桶和僅具備所需權限的 R2 API Token。",
+    "保存备份设置": "儲存備份設定",
+    "测试 R2 连接": "測試 R2 連線",
+    "立即备份到 R2": "立即備份到 R2",
+    "刷新云端备份": "重新整理雲端備份",
+    "对象 Key": "物件 Key",
+    "大小": "大小",
+    "保存配置后可查看云端备份": "儲存設定後可查看雲端備份",
+    "已保存，留空保持不变": "已儲存，留空保持不變",
+    "仅首次或更换时填写": "僅首次或更換時填寫",
+    "(已配置)": "(已設定)",
+    "正在保存备份设置…": "正在儲存備份設定…",
+    "备份设置已保存": "備份設定已儲存",
+    "保存备份设置失败: ": "儲存備份設定失敗: ",
+    "正在测试 R2 连接…": "正在測試 R2 連線…",
+    "R2 连接正常": "R2 連線正常",
+    "R2 连接测试失败: ": "R2 連線測試失敗: ",
+    "R2 中还没有备份": "R2 中還沒有備份",
+    "云端备份列表已刷新": "雲端備份清單已重新整理",
+    "读取云端备份失败: ": "讀取雲端備份失敗: ",
+    "正在打包并上传备份，大型用量目录可能需要一些时间…": "正在打包並上傳備份，大型用量目錄可能需要一些時間…",
+    "备份已上传到 R2": "備份已上傳到 R2",
+    "R2 备份失败: ": "R2 備份失敗: ",
+    "Cloudflare R2 配置、连接测试、手动备份和云端备份列表。": "Cloudflare R2 設定、連線測試、手動備份和雲端備份清單。"
   };
   var HANT_TERMS = {"下拉菜单":"下拉選單","任务":"任務","会话":"會話","余额":"餘額","保存":"儲存","信息":"資訊","内存":"記憶體","凭证":"憑證","删除":"刪除","刷新":"重新整理","加载":"載入","启用":"啟用","响应":"回應","在线":"線上","复制":"複製","失败":"失敗","导入":"匯入","导出":"匯出","当前":"目前","按钮":"按鈕","搜索":"搜尋","支持":"支援","数据":"資料","文件":"檔案","日志":"日誌","权限":"權限","添加":"新增","用户":"使用者","登录":"登入","禁用":"停用","积分":"積分","端口":"埠","筛选":"篩選","粘贴":"貼上","统计":"統計","缓存":"快取","编辑":"編輯","网关":"閘道","网络":"網路","视频":"影片","计划":"計畫","设置":"設定","请求":"請求","账号":"帳號","账户":"帳戶","质量":"品質","软件":"軟體","输入框":"輸入框","运行":"執行","链接":"連結","错误":"錯誤","队列":"佇列","页面":"頁面","默认":"預設"};
   Object.keys(HANT_TERMS).forEach(function(k){ HANT_PHRASES[k] = HANT_TERMS[k]; });
@@ -5510,7 +5578,7 @@ html[data-ui="next"] .next-page-intro p{margin:0;font-size:12px;color:var(--dim)
 html[data-ui="next"] #pageOverview > div:first-child,
 html[data-ui="next"] #pageTasks > div:first-child,
 html[data-ui="next"] #pageAgents > div:first-child,
-html[data-ui="next"] #pageSettings > div:first-child,
+html[data-ui="next"] #pageSettings > div:first-child:not(.page-nav-body),
 html[data-ui="next"] #accountsHeader > div:first-child{display:none!important}
 /* initPageNav() 会把页面内容包进 .page-nav-body，页头不再是页面 div 的直接子节点。 */
 html[data-ui="next"] #pageTasks .page-nav-body > div[style*="margin-bottom:16px"]:first-of-type,
@@ -7059,6 +7127,7 @@ html[data-ui="next"] #nextContent .console-shell > main {padding:24px;max-width:
       <button type="button" class="next-settings-group" data-settings-group="automation" onclick="nextSettingsGroup('automation', this)">自动化</button>
       <button type="button" class="next-settings-group" data-settings-group="stability" onclick="nextSettingsGroup('stability', this)">稳定性</button>
       <button type="button" class="next-settings-group" data-settings-group="system" onclick="nextSettingsGroup('system', this)">日志与系统</button>
+      <button type="button" class="next-settings-group" data-settings-group="backup" onclick="nextSettingsGroup('backup', this)">备份</button>
     </div>
     <div class="next-settings-head">
       <h2 id="nextSettingsTitle">基础</h2>
@@ -7070,13 +7139,14 @@ html[data-ui="next"] #nextContent .console-shell > main {padding:24px;max-width:
     </div>
     <!-- 二级分类胶囊导航 -->
     <div id="settingsCatBar" class="settings-cat-bar">
-      <button type="button" class="settings-cat-btn active" data-cat="all" onclick="filterSettingsCategory('all')">全部 <span class="cat-count">37</span></button>
+      <button type="button" class="settings-cat-btn active" data-cat="all" onclick="filterSettingsCategory('all')">全部 <span class="cat-count">38</span></button>
       <button type="button" class="settings-cat-btn" data-cat="access" onclick="filterSettingsCategory('access')">🔑 访问与密钥 <span class="cat-count">6</span></button>
       <button type="button" class="settings-cat-btn" data-cat="models" onclick="filterSettingsCategory('models')">🤖 模型与调度 <span class="cat-count">10</span></button>
       <button type="button" class="settings-cat-btn" data-cat="limits" onclick="filterSettingsCategory('limits')">🛡️ 限额与并发 <span class="cat-count">4</span></button>
       <button type="button" class="settings-cat-btn" data-cat="network" onclick="filterSettingsCategory('network')">🌐 出口与网络 <span class="cat-count">8</span></button>
       <button type="button" class="settings-cat-btn" data-cat="tasks" onclick="filterSettingsCategory('tasks')">⏰ 自动化 <span class="cat-count">3</span></button>
       <button type="button" class="settings-cat-btn" data-cat="system" onclick="filterSettingsCategory('system')">🛠️ 计费与运维 <span class="cat-count">6</span></button>
+      <button type="button" class="settings-cat-btn" data-cat="backup" onclick="filterSettingsCategory('backup')">☁️ 备份 <span class="cat-count">1</span></button>
     </div>
 
     <!-- 左侧导航由 initPageNav() 扫描本页的 section 自动生成，
@@ -8247,6 +8317,72 @@ html[data-ui="next"] #nextContent .console-shell > main {padding:24px;max-width:
             <button onclick="saveStatsTz(this)">保存</button>
           </div>
         </div>
+      </section>
+
+      <section data-cat="backup" id="r2BackupSettings">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div>
+            <h2 style="margin:0">Cloudflare R2 备份 <em id="setR2State"></em></h2>
+            <div style="font-size:12px;color:var(--dim);margin-top:4px">
+              把 accounts/ 中的账号与设置、以及可选的 usage/ 用量数据打包为 ZIP，通过 S3 兼容接口上传到你自己的 R2 存储桶。默认只手动执行，不会自动上传。
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Cloudflare Account ID</div>
+            <input id="setR2AccountId" type="text" autocomplete="off" spellcheck="false" placeholder="32 位 Account ID"
+                   style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:4px">R2 Bucket</div>
+            <input id="setR2Bucket" type="text" autocomplete="off" spellcheck="false" placeholder="存储桶名称"
+                   style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Access Key ID</div>
+            <input id="setR2AccessKeyId" type="text" autocomplete="off" spellcheck="false"
+                   style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:4px">Secret Access Key</div>
+            <input id="setR2SecretKey" type="password" autocomplete="new-password" placeholder="仅首次或更换时填写"
+                   style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:4px">对象前缀</div>
+            <input id="setR2Prefix" type="text" autocomplete="off" spellcheck="false" placeholder="workbuddy2api-hub"
+                   style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--dim);margin-bottom:4px">S3 Endpoint（可选）</div>
+            <input id="setR2Endpoint" type="text" autocomplete="off" spellcheck="false" placeholder="留空则根据 Account ID 自动生成"
+                   style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--fg);font:inherit">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--dim);margin-top:8px;word-break:break-all">
+          当前上传地址：<span id="setR2ResolvedEndpoint" class="mono">-</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:14px">
+          <input id="setR2IncludeUsage" type="checkbox" checked style="width:16px;height:16px">
+          备份 usage/ 用量与日志数据
+        </label>
+        <div style="font-size:12px;color:var(--dim);margin-top:6px">
+          Secret Access Key 仅保存在本网关设置中，读取设置时只返回是否已配置。备份归档含账号凭证，请使用专用私有桶和仅具备所需权限的 R2 API Token。
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button onclick="saveR2BackupSettings(this)">保存备份设置</button>
+          <button class="sec" onclick="testR2Backup(this)">测试 R2 连接</button>
+          <button class="sec" onclick="runR2Backup(this)">立即备份到 R2</button>
+          <button class="sec" onclick="loadR2Backups(true, this)">刷新云端备份</button>
+        </div>
+        <div id="setR2Message" role="status" aria-live="polite" style="font-size:12px;color:var(--dim);margin-top:10px"></div>
+        <table style="margin-top:14px">
+          <thead><tr><th>备份时间</th><th>对象 Key</th><th>大小</th></tr></thead>
+          <tbody id="setR2BackupRows">
+            <tr><td colspan="3" style="color:var(--dim)">保存配置后可查看云端备份</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <section data-cat="system">
@@ -17869,6 +18005,8 @@ async function loadSettings(showToast, opts){
       keepSelect.value = String((typeof data.keep_backups === 'number') ? data.keep_backups : 1);
     }
     loadUpdateBackups();
+    renderR2BackupSettings(data.r2_backup || {});
+    if(data.r2_backup && data.r2_backup.configured) loadR2Backups();
     const updateProxy = document.getElementById('setUpdateProxySlot');
     if(updateProxy){
       const choices = Array.isArray(data.update_check_proxy_slots)
@@ -17912,6 +18050,151 @@ async function loadSettings(showToast, opts){
     if(showToast) toast('设置已刷新', 'ok');
   } catch(e) {
     if(showToast) toast('读取设置失败: ' + e.message, 'bad');
+  }
+}
+
+let R2_BACKUP_CONFIGURED = false;
+
+function setR2BackupMessage(text, kind){
+  const el = document.getElementById('setR2Message');
+  if(!el) return;
+  el.textContent = text || '';
+  el.style.color = kind === 'bad' ? 'var(--warn)' : (kind === 'ok' ? 'var(--accent2)' : 'var(--dim)');
+}
+
+function renderR2BackupSettings(config){
+  const cfg = config || {};
+  R2_BACKUP_CONFIGURED = cfg.configured === true;
+  const values = {
+    setR2AccountId: cfg.account_id || '',
+    setR2AccessKeyId: cfg.access_key_id || '',
+    setR2Bucket: cfg.bucket || '',
+    setR2Prefix: (typeof cfg.prefix === 'string') ? cfg.prefix : 'workbuddy2api-hub',
+    setR2Endpoint: cfg.endpoint_url || '',
+  };
+  Object.keys(values).forEach(function(id){
+    const input = document.getElementById(id);
+    if(input) input.value = values[id];
+  });
+  const secret = document.getElementById('setR2SecretKey');
+  if(secret){
+    secret.value = '';
+    secret.placeholder = cfg.secret_access_key_set ? '已保存，留空保持不变' : '仅首次或更换时填写';
+  }
+  const includeUsage = document.getElementById('setR2IncludeUsage');
+  if(includeUsage) includeUsage.checked = cfg.include_usage !== false;
+  const endpoint = document.getElementById('setR2ResolvedEndpoint');
+  if(endpoint) endpoint.textContent = cfg.resolved_endpoint || '-';
+  const state = document.getElementById('setR2State');
+  if(state){
+    state.textContent = R2_BACKUP_CONFIGURED ? '(已配置)' : '(未配置)';
+    state.style.color = R2_BACKUP_CONFIGURED ? 'var(--accent2)' : 'var(--dim)';
+  }
+  if(!R2_BACKUP_CONFIGURED){
+    const rows = document.getElementById('setR2BackupRows');
+    if(rows) rows.innerHTML = '<tr><td colspan="3" style="color:var(--dim)">保存配置后可查看云端备份</td></tr>';
+  }
+}
+
+function r2BackupPayload(){
+  const value = function(id){ const el = document.getElementById(id); return el ? el.value : ''; };
+  const include = document.getElementById('setR2IncludeUsage');
+  return {
+    account_id: value('setR2AccountId').trim(),
+    access_key_id: value('setR2AccessKeyId').trim(),
+    secret_access_key: value('setR2SecretKey'),
+    bucket: value('setR2Bucket').trim(),
+    prefix: value('setR2Prefix').trim(),
+    endpoint_url: value('setR2Endpoint').trim(),
+    include_usage: include ? include.checked : true,
+  };
+}
+
+async function saveR2BackupSettings(btn){
+  if(btn) btn.disabled = true;
+  setR2BackupMessage('正在保存备份设置…');
+  try {
+    const result = await postJSON('/settings/save', {r2_backup: r2BackupPayload()});
+    renderR2BackupSettings(result.r2_backup || {});
+    setR2BackupMessage('备份设置已保存', 'ok');
+    toast('备份设置已保存', 'ok');
+    if(R2_BACKUP_CONFIGURED) loadR2Backups();
+  } catch(e) {
+    setR2BackupMessage('保存备份设置失败: ' + e.message, 'bad');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+async function testR2Backup(btn){
+  if(btn) btn.disabled = true;
+  setR2BackupMessage('正在测试 R2 连接…');
+  try {
+    const result = await postJSON('/backup/r2/test', {});
+    if(result.ok){
+      setR2BackupMessage('R2 连接正常', 'ok');
+    } else {
+      setR2BackupMessage('R2 连接测试失败: ' + (result.error || '未知错误'), 'bad');
+    }
+  } catch(e) {
+    setR2BackupMessage('R2 连接测试失败: ' + e.message, 'bad');
+  } finally {
+    if(btn) btn.disabled = false;
+  }
+}
+
+function formatR2BackupBytes(value){
+  let size = Number(value) || 0;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let index = 0;
+  while(size >= 1024 && index < units.length - 1){ size /= 1024; index++; }
+  return (index ? size.toFixed(size >= 10 ? 1 : 2) : String(size)) + ' ' + units[index];
+}
+
+function renderR2BackupRows(backups){
+  const rows = document.getElementById('setR2BackupRows');
+  if(!rows) return;
+  if(!Array.isArray(backups) || !backups.length){
+    rows.innerHTML = '<tr><td colspan="3" style="color:var(--dim)">R2 中还没有备份</td></tr>';
+    return;
+  }
+  rows.innerHTML = backups.map(function(item){
+    const parsed = item.last_modified ? new Date(item.last_modified) : null;
+    const created = parsed && !isNaN(parsed.getTime()) ? parsed.toLocaleString() : (item.last_modified || '-');
+    return '<tr><td>' + esc(created) + '</td><td class="mono" style="word-break:break-all">'
+      + esc(item.key || '-') + '</td><td>' + esc(formatR2BackupBytes(item.size)) + '</td></tr>';
+  }).join('');
+}
+
+async function loadR2Backups(showToast, btn){
+  if(!R2_BACKUP_CONFIGURED) return;
+  const button = btn || null;
+  if(button) button.disabled = true;
+  try {
+    const result = await getJSON('/backup/r2/list');
+    renderR2BackupRows(result.backups || []);
+    if(showToast) toast('云端备份列表已刷新', 'ok');
+  } catch(e) {
+    setR2BackupMessage('读取云端备份失败: ' + e.message, 'bad');
+    if(showToast) toast('读取云端备份失败: ' + e.message, 'bad');
+  } finally {
+    if(button) button.disabled = false;
+  }
+}
+
+async function runR2Backup(btn){
+  if(btn) btn.disabled = true;
+  setR2BackupMessage('正在打包并上传备份，大型用量目录可能需要一些时间…');
+  try {
+    const result = await postJSON('/backup/r2/run', {});
+    setR2BackupMessage('备份已上传到 R2', 'ok');
+    toast('备份已上传到 R2: ' + (result.key || ''), 'ok');
+    await loadR2Backups();
+  } catch(e) {
+    setR2BackupMessage('R2 备份失败: ' + e.message, 'bad');
+    toast('R2 备份失败: ' + e.message, 'bad');
+  } finally {
+    if(btn) btn.disabled = false;
   }
 }
 
@@ -25266,7 +25549,7 @@ if (typeof SORT_DENY_TABLES !== 'undefined' && SORT_DENY_TABLES && SORT_DENY_TAB
     document.body.classList.toggle('next-sidebar-open', on);
   }
 
-  var NEXT_SETTINGS_GROUP_ORDER = ['basic', 'api', 'model', 'automation', 'stability', 'system'];
+  var NEXT_SETTINGS_GROUP_ORDER = ['basic', 'api', 'model', 'automation', 'stability', 'system', 'backup'];
   var NEXT_SETTINGS_GROUPS = {
     basic: {
       title: '基础',
@@ -25297,6 +25580,11 @@ if (typeof SORT_DENY_TABLES !== 'undefined' && SORT_DENY_TABLES && SORT_DENY_TAB
       title: '日志与系统',
       desc: '日志落库、更新、版本回退和运行信息。',
       items: ['日志落库', '统计时区', '更新', '版本回退', '运行信息']
+    },
+    backup: {
+      title: '备份',
+      desc: 'Cloudflare R2 配置、连接测试、手动备份和云端备份列表。',
+      items: ['Cloudflare R2 备份']
     }
   };
 

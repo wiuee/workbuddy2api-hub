@@ -134,7 +134,8 @@ class BoundaryCase(unittest.TestCase):
     # Management reads the panel draws, none of which is a model API.
     PANEL_ONLY_GET = ("/settings", "/updates", "/logs", "/tasks", "/scheduler",
                       "/accounts", "/usage", "/pricing", "/proxy/slots",
-                      "/activity/history", "/agents", "/accounts/credits/grants")
+                      "/activity/history", "/agents", "/accounts/credits/grants",
+                      "/backup/r2/list")
     # The same boundary on a reply that is a file rather than a document.
     PANEL_ONLY_DOWNLOAD = ("/logs/export",)
     # The management writes, each guarded by its own panel check in do_POST.
@@ -142,7 +143,7 @@ class BoundaryCase(unittest.TestCase):
     # the two pricing writes are the ones the panel's own buttons post to.
     PANEL_ONLY_POST = ("/updates/check", "/pricing/refresh",
                        "/pricing/mapping", "/settings/save",
-                       "/catalog/refresh",
+                       "/catalog/refresh", "/backup/r2/test", "/backup/r2/run",
                        "/settings/device-token/reload")
 
     def setUp(self):
@@ -157,7 +158,15 @@ class BoundaryCase(unittest.TestCase):
         request = DispatchRequest(path, headers=headers, command=command, body=body)
         with mock.patch.multiple(proxy, ACCOUNTS_DIR=self.directory, API_KEY=None,
                                  POOL=pool, PRICING=None, UPDATES=self.updates,
-                                 SCHEDULER=None, fetch_models=injected_models):
+                                 SCHEDULER=None, fetch_models=injected_models), \
+                mock.patch.multiple(
+                    proxy.wb_backup,
+                    list_backups=mock.Mock(return_value=[]),
+                    test_connection=mock.Mock(return_value={
+                        "ok": True, "bucket": "fixture", "endpoint": "https://r2.fixture"}),
+                    backup_now=mock.Mock(return_value={
+                        "ok": True, "key": "fixture.zip", "size": 1,
+                        "file_count": 1})):
             return request.dispatch()
 
     def assert_refused(self, path, headers, command="GET", body=b""):

@@ -64,6 +64,7 @@ wb_activity.py
 wb_agents.py
 wb_atrest.py
 wb_audio.py
+wb_backup.py
 wb_catalog.py
 wb_codearts.py
 wb_codearts_crypto.py

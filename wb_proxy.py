@@ -73,6 +73,7 @@ import wb_accounts
 import wb_activity
 import wb_audio
 import wb_atrest
+import wb_backup
 import wb_catalog
 import wb_codearts
 import wb_egress
@@ -1233,7 +1234,7 @@ CORS_PATH_PREFIXES = ("/v1", "/chat", "/completions", "/models", "/responses")
 # Management paths that happen to live under /v1 must not be treated as API:
 # /v1/usage reports account-level spend and is gated by the panel session.
 MANAGEMENT_PATH_PREFIXES = ("/v1/usage", "/usage", "/accounts", "/settings",
-                            "/tasks", "/scheduler", "/panel", "/logs",
+                            "/backup", "/tasks", "/scheduler", "/panel", "/logs",
                             "/codearts")
 def cors_origin_allowed(path):
     """True when the OpenAI-style API path should advertise CORS."""
@@ -12843,6 +12844,7 @@ def runtime_settings_view():
         ],
         "keep_backups": wb_settings.keep_backups(ACCOUNTS_DIR),
         "keep_backups_max": wb_settings.MAX_KEEP_BACKUPS,
+        "r2_backup": wb_backup.panel_config(ACCOUNTS_DIR),
         "upstream": _panel_upstream_config(ACCOUNTS_DIR),
         "outbound_tls": wb_upstream_pool.tls_status(),
         "device_token_status": _panel_device_token_status(ACCOUNTS_DIR),
@@ -22641,6 +22643,7 @@ def _release_key_slot(key_entry):
 # 新增这类「不读 body」的面板路由，请加进这个元组，别在路由里另写一份。
 BODYLESS_PANEL_POSTS = ("/console/toggle", "/shutdown", "/updates/check",
                         "/updates/install", "/quota-scan/run",
+                        "/backup/r2/test", "/backup/r2/run",
                         "/settings/restriction/reset",
                         "/settings/device-token/reload")
 
@@ -23426,6 +23429,8 @@ class Handler(BaseHTTPRequestHandler):
             return True
         if path.startswith("/settings"):
             return True
+        if path.startswith("/backup"):
+            return True
         if path.startswith("/updates"):
             return True
         if path.startswith("/logs"):
@@ -23614,6 +23619,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._get_updates()
         if path == "/updates/backups":
             return self._get_update_backups()
+        if path == "/backup/r2/list":
+            return self._get_r2_backups()
         if path == "/proxy/slots":
             if not self._panel_ok():
                 return self._error(
@@ -24797,6 +24804,39 @@ class Handler(BaseHTTPRequestHandler):
         payload["keep_backups_max"] = wb_settings.MAX_KEEP_BACKUPS
         payload["rollback_enabled"] = wb_update_request.install_enabled()
         return self._json(200, payload)
+
+    def _get_r2_backups(self):
+        """List only this app's archives in the configured R2 bucket/prefix."""
+        if not self._authorized():
+            return
+        try:
+            backups = wb_backup.list_backups(ACCOUNTS_DIR)
+        except (wb_backup.R2Error, ValueError) as exc:
+            return self._error(502, str(exc)[:400], "r2_backup_error")
+        return self._json(200, {"ok": True, "backups": backups})
+
+    def _route_r2_test(self):
+        try:
+            result = wb_backup.test_connection(ACCOUNTS_DIR)
+        except (wb_backup.R2Error, ValueError) as exc:
+            return self._json(200, {"ok": False, "error": str(exc)[:400]})
+        log("R2 connection test succeeded for bucket %s" % result["bucket"],
+            tag="backup")
+        return self._json(200, result)
+
+    def _route_r2_backup(self):
+        try:
+            result = wb_backup.backup_now(
+                ACCOUNTS_DIR, USAGE_DIR, version=running_version())
+        except wb_backup.BackupBusy as exc:
+            return self._error(409, str(exc), "r2_backup_busy")
+        except (wb_backup.R2Error, ValueError, OSError) as exc:
+            log("R2 backup failed: %s" % str(exc)[:240],
+                level="WARN", tag="backup")
+            return self._error(502, str(exc)[:400], "r2_backup_error")
+        log("R2 backup uploaded: %s (%d bytes, %d files)" % (
+            result["key"], result["size"], result["file_count"]), tag="backup")
+        return self._json(200, result)
 
     def _get_logs(self, query):
         if not self._authorized():
@@ -26879,6 +26919,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self._error(400, str(exc), "invalid_request_error")
             wb_settings.set_media_config(ACCOUNTS_DIR, patch)
             reply["media"] = wb_settings.media_config(ACCOUNTS_DIR)
+        if "r2_backup" in payload:
+            raw = payload.get("r2_backup")
+            if not isinstance(raw, dict):
+                return self._error(400, "r2_backup must be an object",
+                                   "invalid_request_error")
+            try:
+                reply["r2_backup"] = wb_backup.save_config(ACCOUNTS_DIR, raw)
+            except ValueError as exc:
+                return self._error(400, str(exc), "invalid_request_error")
         if "codearts" in payload:
             raw = payload.get("codearts")
             if not isinstance(raw, dict):
@@ -29566,6 +29615,12 @@ class Handler(BaseHTTPRequestHandler):
             if not self._panel_ok():
                 return self._error(401, "panel password required", "invalid_request_error")
             return self._handle_settings_save()
+        if path in ("/backup/r2/test", "/backup/r2/run"):
+            if not self._panel_ok():
+                return self._error(401, "panel password required", "invalid_request_error")
+            if path == "/backup/r2/test":
+                return self._route_r2_test()
+            return self._route_r2_backup()
         if path == "/settings/device-token/reload":
             if not self._panel_ok():
                 return self._error(401, "panel password required", "invalid_request_error")

@@ -88,6 +88,7 @@ REQUIRED_FILES = (
     "Lib/html/__init__.py", "Lib/http/__init__.py", "Lib/http/client.py",
     "Lib/concurrent/__init__.py", "Lib/concurrent/futures/__init__.py",
     "Lib/ctypes/__init__.py", "Lib/collections/__init__.py", "Lib/re/__init__.py",
+    "Lib/xml/__init__.py",
     "DLLs/_socket.pyd", "DLLs/_ssl.pyd", "DLLs/_hashlib.pyd", "DLLs/_ctypes.pyd",
     "DLLs/select.pyd", "DLLs/unicodedata.pyd", "DLLs/_uuid.pyd", "DLLs/_decimal.pyd",
     "DLLs/_sqlite3.pyd",
